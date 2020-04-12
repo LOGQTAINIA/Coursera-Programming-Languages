@@ -34,3 +34,6 @@ val test13 = dates_in_months_challenge ([(2012,2,28),(2013,12,1),(2011,3,31),(20
 val test14 = reasonable_date (2000, 2, 29) = false
 
 val test15 = reasonable_date (2004, 2, 29) = true
+
+val test16 = number_in_month([(1,2,25),(3,2,28),(1,2,27),(1,2,25)], 2) = 4
+                                                                             
