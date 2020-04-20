@@ -10,11 +10,11 @@ fun same_string(s1 : string, s2 : string) =
 fun all_except_option (str, lst) =
     case lst of
         [] => NONE
-      | x::xs => case all_except_option(str, xs) of
-                     NONE => if same_string(x, str)
-                             then SOME xs
-                             else NONE
-                   | SOME l => SOME (x::l)
+      | x::xs => if same_string(x, str)
+                 then SOME xs
+                 else case all_except_option(str, xs) of
+                          NONE => NONE
+                        | SOME l => SOME(x::l)
 
 fun get_substitutions1 (lst, str) =
     case lst of
@@ -29,18 +29,19 @@ fun get_substitutions2 (lst, str) =
                 [] => acc
               | x::xs => case all_except_option(str, x) of
                              NONE => aux(xs, acc)
-                          | SOME l => aux(xs, acc @ l)
+                           | SOME l => aux(xs, acc @ l)
     in
         aux(lst, [])
     end
 
-fun similar_names (lst, {first=x, middle=y, last=z}) =
-    let fun aux (names) =
+fun similar_names (lst, name) =
+    let val {first=x, middle=y, last=z} = name
+        fun aux (names) =
             case names of
                 [] => []
               | head::rest => {first=head, middle=y, last=z}::aux(rest)
     in
-        {first=x, middle=y, last=z}::aux(get_substitutions2(lst, x))
+        name::aux(get_substitutions2(lst, x))
     end
 
 
@@ -74,7 +75,7 @@ fun remove_card (cs, c, e) =
         [] => raise e
       | x::xs => if x=c
                  then xs
-                 else x::remove_card(xs, c, e) handle IllegalMove => raise e
+                 else x::remove_card(xs, c, e)
 
 fun all_same_color (cs) =
     case cs of
@@ -108,8 +109,67 @@ fun officiate (cards, moves, goal) =
                                             then score(chd::hs, goal)
                                             else aux(ctl, xs, chd::hs)
               | (cs, Discard c::xs, hs) => aux(cs, xs, remove_card(hs, c, IllegalMove))
-
     in
         aux(cards, moves, [])
+    end
+
+(* put your solutions for problem 3 here *)
+fun nums_of_Aces lst =
+    case lst of
+        [] => 0
+      | (_, Ace)::rest => 1 + nums_of_Aces rest
+      | _::rest => nums_of_Aces rest
+
+fun score_challenge (cs, goal) =
+    let fun cal_pre_score (diff, aces) =
+            let val score = if diff > 0 then diff * 3 else ~diff
+            in
+                if diff < 0 orelse aces=0
+                then score
+                else Int.min(score, cal_pre_score(diff - 10, aces - 1))
+            end
+        val diff = sum_cards cs - goal
+        val pre_score = cal_pre_score(sum_cards cs - goal, nums_of_Aces cs)
+    in
+        if all_same_color cs then pre_score div 2 else pre_score
+    end
+
+fun officiate_challenge (cards, moves, goal) =
+    let fun sum_least cs =
+            sum_cards cs - 10 * (nums_of_Aces cs)
+        fun aux (cs, ms, hs) =
+            case (cs, ms, hs) of
+                ([], Draw::xs, _) => score_challenge(hs, goal)
+              | (_, [], _) => score_challenge(hs, goal)
+              | (chd::ctl, Draw::xs, hs) => if sum_least(chd::hs) > goal
+                                            then score_challenge(chd::hs, goal)
+                                            else aux(ctl, xs, chd::hs)
+              | (cs, Discard c::xs, hs) => aux(cs, xs, remove_card(hs, c, IllegalMove))
+    in
+        aux(cards, moves, [])
+    end
+
+fun careful_player (cards, goal) =
+    let fun find_card (cards, num) =
+            case cards of
+                [] => NONE
+              | c::cs => if card_value c = num
+                         then SOME c
+                         else find_card(cs, num)
+        fun aux (cs, hs, ms) =
+            if sum_cards hs - goal = 0
+            then ms
+            else case cs of
+                     [] => ms
+                   | c::cs' => let val diff = card_value c + sum_cards hs - goal
+                               in
+                                   if diff <= 0
+                                   then aux (cs', c::hs, ms @ [Draw])
+                                   else case find_card(hs, diff) of
+                                            NONE => ms
+                                          | SOME rc => ms @ [Discard rc, Draw]
+                               end
+    in
+        aux(cards, [], [])
     end
         
