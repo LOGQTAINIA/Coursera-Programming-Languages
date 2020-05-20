@@ -26,7 +26,8 @@
 (define (stream-for-n-steps s n)
   (if (= n 0)
       null
-      (cons (car (s)) (stream-for-n-steps (cdr (s)) (- n 1)))))
+      (let ([nxt (s)])
+        (cons (car nxt) (stream-for-n-steps (cdr nxt) (- n 1))))))
 
 ;; problem 5
 (define funny-number-stream
@@ -44,9 +45,8 @@
 
 ;; problem 7
 (define (stream-add-zero s)
-  (letrec ([f (lambda (st) (cons (cons 0 (car (st)))
-                                 (lambda () (f (cdr (st))))))])
-    (lambda () (f s))))
+  (lambda () (let ([nxt (s)])
+                (cons (cons 0 (car nxt)) (stream-add-zero (cdr nxt))))))
 
 ;; problem 8
 (define (cycle-lists xs ys)
@@ -71,16 +71,14 @@
   (letrec ([cache (make-vector n #f)]
            [slot 0]
            [helper (lambda (v) (let ([ele-xs (assoc v xs)])
-                                  (if ele-xs
-                                      (begin 
-                                        (vector-set! cache slot ele-xs)
-                                        (set! slot (remainder (+ slot 1) n))
-                                        ;;(print cache)
-                                      ele-xs)
-                                      ele-xs)))])
+                                  (and ele-xs
+                                       (begin 
+                                          (vector-set! cache slot ele-xs)
+                                          (set! slot (remainder (+ slot 1) n))
+                                          ;;(print cache)
+                                          ele-xs))))])
     (lambda (v) (let ([ele-cache (vector-assoc v cache)])
-                  (if ele-cache 
-                      ele-cache
+                  (or ele-cache 
                       (helper v))))))
 
 ;; problem 11
