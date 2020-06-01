@@ -8,3 +8,5 @@ Homework code for Coursera Programming Languages, Part A, B and C
 
 [Programming Languages, Part B](https://www.coursera.org/learn/programming-languages-part-b)
 
+[Programming Languages, Part C](https://www.coursera.org/learn/programming-languages-part-C)
+
